@@ -35,7 +35,9 @@ slim_data_file = open(filename, "w")
 
 del_rows = []
 #13 is the column with issue dates, after 2 columns are deleted
-int index = 0
+<<<<<<< HEAD
+=======
+>>>>>>> b5d2c7bf208527a5f328221e5c4af64b64739b18
 for i in range(n):
     date = slimData[i, 13]
     if "7" in date or "8" in date or "9" in date:
