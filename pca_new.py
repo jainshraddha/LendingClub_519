@@ -17,8 +17,6 @@ from sklearn.model_selection import train_test_split
 
 
 
-
-
 filename = "data/binarizedTraining.csv"
 
 raw_data = pd.read_csv(filename,sep=',')
@@ -94,21 +92,26 @@ estimator.fit(np.asarray(X_standardize), y.ravel())
 
 print estimator.best_params_
 
-include_test = True
+include_test = False
 test_percentage = 0.20
 if (include_test):
     training_data, test_data, training_target, test_target = train_test_split(X_standardize, y, test_size=test_percentage,random_state=0)
+else:
+    training_data = X_standardize
+    training_target = y
+    test_data = Xtest_standardize
+    test_target = ytest
 
 over_sampling = True
 under_sampling = False
 
-if over_sampling:
+if over_sampling and include_test:
     ros = RandomOverSampler(random_state=0)
     training_data, training_target = ros.fit_sample(training_data, training_target.reshape(-1,1))
     test_data, test_target = ros.fit_sample(test_data, test_target.reshape(-1,1))
 #    X_standardize = [X_standardize.item(i) for i in range(len(X_standardize))]
     
-elif under_sampling:
+elif under_sampling and include test:
     rus = RandomUnderSampler(random_state=0)
     training_data, training_target = rus.fit_sample(training_data, training_target.reshape(-1,1)) 
     test_data, test_target = rus.fit_sample(test_data, test_target.reshape(-1,1))
@@ -140,10 +143,10 @@ training_probabilities = estimator.predict_proba(np.array(training_data))
 test_probabilities = estimator.predict_proba(np.array(test_data))
 
 
-print "Training AUC: " 
-print roc_auc_score(training_target, training_probabilities[:,1])
-print "--------------------------------------------"
-print("Test AUC: {}".format(roc_auc_score(test_target, test_probabilities[:,1])))
+#print "Training AUC: " 
+#print roc_auc_score(training_target, training_probabilities[:,1])
+#print "--------------------------------------------"
+#print("Test AUC: {}".format(roc_auc_score(test_target, test_probabilities[:,1])))
 
 
 #f = open('standard_logreg.txt', 'w+')
