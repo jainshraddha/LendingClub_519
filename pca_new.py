@@ -99,18 +99,32 @@ test_percentage = 0.20
 if (include_test):
     training_data, test_data, training_target, test_target = train_test_split(X_standardize, y, test_size=test_percentage,random_state=0)
 
-over_sampling = False
-under_sampling = True
+over_sampling = True
+under_sampling = False
 
 if over_sampling:
     ros = RandomOverSampler(random_state=0)
     training_data, training_target = ros.fit_sample(training_data, training_target.reshape(-1,1))
+    test_data, test_target = ros.fit_sample(test_data, test_target.reshape(-1,1))
 #    X_standardize = [X_standardize.item(i) for i in range(len(X_standardize))]
+    
 elif under_sampling:
     rus = RandomUnderSampler(random_state=0)
-    training_data, training_target = rus.fit_sample(training_data, training_target.reshape(-1,1))
+    training_data, training_target = rus.fit_sample(training_data, training_target.reshape(-1,1)) 
+    test_data, test_target = rus.fit_sample(test_data, test_target.reshape(-1,1))
+
 #    X_standardize = [training_data.item(i) for i in range(len(training_data))]
 
+if over_sampling:
+    print "over sampling:"
+else:
+    print "under sampling:"
+pred = estimator.predict(training_data)
+training_accuracy = accuracy_score(training_target, pred)
+test_pred = estimator.predict(test_data)
+test_accuracy = accuracy_score(test_target, test_pred)
+print "training accuracy: ", training_accuracy
+print "test accuracy: ", test_accuracy
 
 #if over_sampling:
 #    ros = RandomOverSampler(random_state=0)
