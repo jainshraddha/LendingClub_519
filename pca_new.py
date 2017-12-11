@@ -13,6 +13,8 @@ from sklearn.metrics import roc_auc_score
 from sklearn.metrics import accuracy_score
 from imblearn.over_sampling import RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
+from sklearn.model_selection import train_test_split
+
 
 
 
@@ -67,10 +69,11 @@ Xtest_standardize = np.concatenate((Xtest_standardize, Xtest), axis=1)
 
 print Xtest_standardize.shape
 y = y.astype('int')
+ytest = ytest.astype('int')
 
-n_components = [15, 20, 25]
+n_components = [20]
 
-Cs = [0.1,0.01,0.001,0.0001,1]
+Cs = [0.001,0.0001]
 
 logistic = linear_model.LogisticRegression()
 
@@ -82,7 +85,7 @@ pca.fit(X_standardize)
 estimator = GridSearchCV(pipe, 
                          dict(pca__n_components=n_components,
                               logistic__C=Cs), refit=True)
-estimator.fit(np.asarray(X_standardize), y)
+estimator.fit(np.asarray(X_standardize), y.ravel())
 
 #weight vector of contributing factors of variance?
 #under/oversampling
@@ -91,41 +94,65 @@ estimator.fit(np.asarray(X_standardize), y)
 
 print estimator.best_params_
 
-pred = estimator.predict(Xtest_standardize)
+include_test = True
+test_percentage = 0.20
+if (include_test):
+    training_data, test_data, training_target, test_target = train_test_split(X_standardize, y, test_size=test_percentage,random_state=0)
 
-standard_probs = estimator.predict_proba(Xtest_standardize)
-
-over_sampling = True
-under_sampling = False
-
+over_sampling = False
+under_sampling = True
 
 if over_sampling:
     ros = RandomOverSampler(random_state=0)
-    X_standardize, y = ros.fit_sample(training_data.reshape(-1,1), X_standardize.reshape(-1,1))
-    X_standardize = [X_standardize.item(i) for i in range(len(X_standardize))]
+    training_data, training_target = ros.fit_sample(training_data, training_target.reshape(-1,1))
+#    X_standardize = [X_standardize.item(i) for i in range(len(X_standardize))]
 elif under_sampling:
     rus = RandomUnderSampler(random_state=0)
-    X_standardize, y = rus.fit_sample(training_data.reshape(-1,1), y.reshape(-1,1))
-    X_standardize = [training_data.item(i) for i in range(len(training_data))]
+    training_data, training_target = rus.fit_sample(training_data, training_target.reshape(-1,1))
+#    X_standardize = [training_data.item(i) for i in range(len(training_data))]
 
 
-training_probabilities = estimator.predict_proba(X_standardize)
-test_probabilities = estimator.predict_proba(Xtest_Standardize)
-print("Training AUC: {}".format(roc_auc_score(y, training_probabilities[:,1])))
-print("Test AUC: {}".format(roc_auc_score(ytest, test_probabilities[:,1])))
+#if over_sampling:
+#    ros = RandomOverSampler(random_state=0)
+#    X_standardize, y = ros.fit_sample(training_data, y.reshape(-1,1))
+##    X_standardize = [X_standardize.item(i) for i in range(len(X_standardize))]
+#elif under_sampling:
+#    rus = RandomUnderSampler(random_state=0)
+#    X_standardize, y = rus.fit_sample(X_standardize.reshape(-1,1), y.reshape(-1,1))
+##    X_standardize = [training_data.item(i) for i in range(len(training_data))]
+
+
+training_probabilities = estimator.predict_proba(np.array(training_data))
+test_probabilities = estimator.predict_proba(np.array(test_data))
+
+
+print "Training AUC: " 
+print roc_auc_score(training_target, training_probabilities[:,1])
+print "--------------------------------------------"
+print("Test AUC: {}".format(roc_auc_score(test_target, test_probabilities[:,1])))
 
 
 #f = open('standard_logreg.txt', 'w+')
 #for prob in standard_probs:
 #    f.write(str(prob[0])+","+str(prob[1])+"\n")
 
-f = open('OverSampled_train_logreg.txt', 'w+')
-for prob in training_probabilities:
-    f.write(str(prob[0])+","+str(prob[1])+"\n")
+if over_sampling:
+    f = open('OverSampled_train_logreg.txt', 'w+')
+    for prob in training_probabilities:
+        f.write(str(prob[0])+","+str(prob[1])+"\n")
 
-f = open('OverSampled_test_logreg.txt', 'w+')
-for prob in test_probabilities:
-    f.write(str(prob[0])+","+str(prob[1])+"\n")
+    f = open('OverSampled_test_logreg.txt', 'w+')
+    for prob in test_probabilities:
+        f.write(str(prob[0])+","+str(prob[1])+"\n")
+        
+else:
+    f = open('UnderSampled_train_logreg.txt', 'w+')
+    for prob in training_probabilities:
+        f.write(str(prob[0])+","+str(prob[1])+"\n")
+
+    f = open('UnderSampled_test_logreg.txt', 'w+')
+    for prob in test_probabilities:
+        f.write(str(prob[0])+","+str(prob[1])+"\n")
     
 
     
